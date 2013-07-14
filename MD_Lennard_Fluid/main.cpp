@@ -14,7 +14,7 @@ int global_L=8;            // Kastenlänge
 int global_N=16;           // Anzahl der Teilchen
 int global_T=300;          // Temperatur
 double global_m=1.674927351e-27;            // Teilchenmasse in kg (Proton)
-double t_step = 0.0001;
+double t_step = 1e-10;
 double t_max = 10000*t_step;
 double t_equi = 100*t_step;
 double t_measure = 1000*t_step;
@@ -31,6 +31,7 @@ struct measurement {
 };
 
 vector<base> r;
+vector<base> r_old;
 vector<base> v;
 vector<base> F;
 
@@ -87,7 +88,7 @@ double gettemp() {
         sum.x += abs(v[i].x);
         sum.y += abs(v[i].y);
     }
-    return 0.5*global_m/kB*((sum.x*sum.x)+(sum.y*sum.y))/global_N;
+    return 0.5*global_m/kB*((sum.x*sum.x)+(sum.y*sum.y))/(3*global_N-3);
 }
 
 void settemp(float T) {
@@ -126,11 +127,11 @@ void calculate_forces() {
 
             base r_temp = {r_1.x - r_2.x, r_1.y-r_2.y};
             // loop around boundary
-            r_temp.x = r_temp.x - floor(1.0*r_temp.x/global_L);
-            r_temp.y = r_temp.y - floor(1.0*r_temp.y/global_L);
+            r_temp.x = r_temp.x - floor(r_temp.x/global_L)*global_L;;
+            r_temp.y = r_temp.y - floor(r_temp.y/global_L)*global_L;;
 
             if (r_temp.x < global_L/2.0 and r_temp.y < global_L/2.0) {
-				base F_temp = get_force(r_temp);
+                base F_temp = get_force(r_temp);
                 F[i].x = F[i].x + F_temp.x;
                 F[i].y = F[i].y + F_temp.y;
                 F[k].x = F[k].x - F_temp.x;
@@ -140,14 +141,39 @@ void calculate_forces() {
     }
 }
 
+void calculate_movement() {
+    for(int i=0; i<global_N; i++) {
+        base r_new = {0,0};
+        // verlet: r = 2r - r_(-1) + dt²*F
+        base r_old = {r[i].x - t_step*v[i].x, r[i].y - t_step*v[i].y};
+        r_new.x = 2*r[i].x - ( r_old.x ) + pow(t_step, 2)*F[i].x/global_m;
+        r_new.y = 2*r[i].y - ( r_old.y ) + pow(t_step, 2)*F[i].y/global_m;
+
+		double x = floor(r_new.x/global_L);
+		r_new.x = r_new.x - floor(r_new.x/global_L)*global_L;
+		r_new.y = r_new.y - floor(r_new.y/global_L)*global_L;
+
+        v[i].x = (r_new.x - r_old.x)/(2*t_step);
+        v[i].y = (r_new.y - r_old.y)/(2*t_step);
+
+		//cout<<r_new.x<<endl;
+		r[i].x = r_new.x;
+        r[i].y = r_new.y;
+    }
+}
+
 void md_step() {
-	calculate_forces();
-	// TODO: calculate_movement();
+    calculate_forces();
+    calculate_movement();
 }
 
 measurement measure() {
     measurement mes = {0};
     return mes;
+}
+
+void p() {
+    cout<<"x="<<r[0].x<<" \ty="<<r[0].y<<endl;
 }
 
 void save_measurement(measurement mes) {}
@@ -159,11 +185,15 @@ int main() {
     settemp(global_T);
     cout << gettemp()<<endl;
 
+	md_step();
+	p();
+
     // equilibrate
     double t = 0;
     while(t < t_equi) {
         md_step();
         t += t_step;
+        p();
     }
 
     // central MD-loop
