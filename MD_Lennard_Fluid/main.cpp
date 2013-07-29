@@ -149,7 +149,7 @@ void calculate_movement() {
         r_new.x = 2*r[i].x - ( r_old.x ) + pow(t_step, 2)*F[i].x/global_m;
         r_new.y = 2*r[i].y - ( r_old.y ) + pow(t_step, 2)*F[i].y/global_m;
 
-		double x = floor(r_new.x/global_L);
+		//double x = floor(r_new.x/global_L);
 		r_new.x = r_new.x - floor(r_new.x/global_L)*global_L;
 		r_new.y = r_new.y - floor(r_new.y/global_L)*global_L;
 
