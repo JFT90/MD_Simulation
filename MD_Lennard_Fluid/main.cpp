@@ -13,7 +13,7 @@ using namespace std;
 int global_L=8;            // Kastenlänge
 int global_N=16;           // Anzahl der Teilchen
 int global_T=300;          // Temperatur
-double global_m=1.674927351e-27;            // Teilchenmasse in kg (Proton)
+double global_m=6.6e-26;            // Teilchenmasse in kg
 double t_step = 1e-10;
 double t_max = 10000*t_step;
 double t_equi = 100*t_step;
@@ -88,7 +88,7 @@ double gettemp() {
         sum.x += abs(v[i].x);
         sum.y += abs(v[i].y);
     }
-    return 0.5*global_m/kB*((sum.x*sum.x)+(sum.y*sum.y))/(3*global_N-3);
+    return 0.5*global_m/kB*((sum.x*sum.x)+(sum.y*sum.y))/(2*global_N-2);
 }
 
 void settemp(float T) {
@@ -104,8 +104,8 @@ void settemp(float T) {
 base get_force(base x) {
     double mag = 0;
     // Lennard-Jones potential
-    double epsilon = 1.0;
-    double sigma = 1.0;
+    double epsilon = kB;
+    double sigma = 3.4e-10;
     double r_len = sqrt(x.x*x.x + x.y*x.y);
     mag = 48*epsilon/(r_len*r_len)*( 0.5*pow(sigma/r_len, 6) - pow(sigma/r_len, 12));
     base retval = x;
@@ -145,19 +145,30 @@ void calculate_movement() {
     for(int i=0; i<global_N; i++) {
         base r_new = {0,0};
         // verlet: r = 2r - r_(-1) + dt²*F
-        base r_old = {r[i].x - t_step*v[i].x, r[i].y - t_step*v[i].y};
-        r_new.x = 2*r[i].x - ( r_old.x ) + pow(t_step, 2)*F[i].x/global_m;
-        r_new.y = 2*r[i].y - ( r_old.y ) + pow(t_step, 2)*F[i].y/global_m;
+        base r_oldt = {0,0};
+        double a = r[i].y;
+        cout << "a = " << a << endl;
+        r_oldt.x = r[i].x - t_step*v[i].x;
+        r_oldt.y = r[i].y - t_step*v[i].y;
+        double temp = pow(t_step, 2)*F[i].x/global_m;
+        r_new.x = 2*r[i].x;
+        r_new.x -= r_oldt.x;
+        r_new.x += temp;
+        temp = pow(t_step, 2)*F[i].y/global_m;
+        r_new.y = 2*r[i].y;
+        r_new.y -= r_oldt.y;
+        r_new.y += temp;
 
-		//double x = floor(r_new.x/global_L);
-		r_new.x = r_new.x - floor(r_new.x/global_L)*global_L;
-		r_new.y = r_new.y - floor(r_new.y/global_L)*global_L;
+        // calculate the new speed with actual positions
+        v[i].x = (r_new.x - r[i].x)/(2*t_step);
+        v[i].y = (r_new.y - r[i].y)/(2*t_step);
 
-        v[i].x = (r_new.x - r_old.x)/(2*t_step);
-        v[i].y = (r_new.y - r_old.y)/(2*t_step);
+        r_new.x = r_new.x - floor(r_new.x/global_L)*global_L;
+        r_new.y = r_new.y - floor(r_new.y/global_L)*global_L;
 
-		//cout<<r_new.x<<endl;
-		r[i].x = r_new.x;
+
+        //cout<<r_new.x<<endl;
+        r[i].x = r_new.x;
         r[i].y = r_new.y;
     }
 }
@@ -179,14 +190,16 @@ void p() {
 void save_measurement(measurement mes) {}
 
 int main() {
-    srand(time(NULL));
+    //srand(time(NULL));
+    // initialize random generator
+    srand(4);
     init();
     cout <<gettemp()<<endl;
     settemp(global_T);
     cout << gettemp()<<endl;
 
-	md_step();
-	p();
+    md_step();
+    p();
 
     // equilibrate
     double t = 0;
@@ -209,5 +222,7 @@ int main() {
         save_measurement(mes);
     }
 
+    char tane[10];
+    cin >> tane;
     return 0;
 }
