@@ -11,8 +11,10 @@
 *.lai
 *.la
 *.a
+
 #Other stuff
 bin/
 *.depend
 *.layout
 *.cbp
+*.save
