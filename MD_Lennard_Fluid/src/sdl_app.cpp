@@ -21,6 +21,7 @@ int sdl_app::on_execute(simulation* sim) {
     SDL_Event event;
 
     int step = 0;
+    int draw_step = 10; // draw only every x-th step
 
     while(running) {
         while(SDL_PollEvent(&event)) {
@@ -28,10 +29,9 @@ int sdl_app::on_execute(simulation* sim) {
         }
 
         on_loop();
-
-        // draw only every 100th step
 		step += 1;
-		if (step>=100) {
+
+		if (step>=draw_step) {
 			on_render();
 			step = 0;
 		}
@@ -65,22 +65,51 @@ bool sdl_app::on_init() {
 
 void sdl_app::on_loop() {
 	// update positions in simulation
+//	/*
+	static int i = 0;
+	static int too_high = 0;
+	static double E0 = 0;
+	if(i==33){
+		i++;
+		i--;
+	}
+//	*/
 	sim->main_step();
+//	/*
+	double energy_kin = sim->measure().E_kin;
+	double energy_pot = sim->measure().E_pot;
+	if (i==0){E0=energy_kin+energy_pot;}
+	cout << "i=" << i << "\tenergy_kin: " << energy_kin << "\tpot: " << energy_pot;
+	i++;
+	if ((energy_kin+energy_pot)>E0*1.2) {too_high++; cout << " <-- !!!!!!!!" << endl;}
+	else { cout << endl;}
+	if ((energy_kin+energy_pot)<=E0*1.2) {too_high = 0;}
+
+	if (too_high>=3) {
+		cout << "energy too high three times in a row!"<<endl;
+		char in[5];
+		cin >> in;
+		too_high = 0;}
+
+	// breakpoint
+//	*/
 }
 
 void sdl_app::on_render() {
     surface::draw_rectangle(surf_display, 0, 0, WIDTH, HEIGHT, 0, 0, 0);
     for(int i=0;i<sim->get_global_N();i++) {
 		// draw
-		double x = sim->get_r()[i].x*WIDTH*1.0/sim->get_global_L();
-		double y = sim->get_r()[i].y*HEIGHT*1.0/sim->get_global_L();
-		draw_dot(x,y);
+		double x = sim->get_r()[i].x/sim->get_global_L();
+		double y = sim->get_r()[i].y/sim->get_global_L();
+		x *= HEIGHT*1.0;
+		y *= WIDTH*1.0;
+		draw_dot((int) x,(int) y);
     }
 
     SDL_Flip(surf_display);
 
     // to take a little stress from the CPU
-    // SDL_Delay(100);
+    SDL_Delay(100);
 }
 
 void sdl_app::OnEvent(SDL_Event *i_event) {
@@ -101,6 +130,6 @@ void sdl_app::on_cleanup() {
 void sdl_app::reset() {
 }
 
-void sdl_app::draw_dot(double x, double y) {
+void sdl_app::draw_dot(int x, int y) {
     surface::on_draw(surf_display, surf_dot, x, y);
 }

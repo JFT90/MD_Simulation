@@ -8,21 +8,6 @@
 
 using namespace std;
 
-//#########################################################################
-// Simulation parameters
-extern const int global_L; // Kastenlänge
-extern const int global_N; // Anzahl der Teilchen
-extern const int global_T; // Temperatur
-extern const double global_m; // Teilchenmasse in kg
-extern const double t_step;
-extern const double t_max;
-extern const double t_equi;
-extern const double t_measure;
-//#########################################################################
-
-
-extern const double kB; // Boltzmannkonstante
-
 #ifndef BASE
 #define BASE
 struct base { // Structschablone für Ort oder Geschwindigkeit
@@ -31,13 +16,9 @@ struct base { // Structschablone für Ort oder Geschwindigkeit
 #endif // BASE
 
 struct measurement {
-    double E;
+    double E_kin;
+	double E_pot;
 };
-
-extern vector<base> r;
-extern vector<base> r_old;
-extern vector<base> v;
-extern vector<base> F;
 
 class simulation
 {
@@ -60,10 +41,15 @@ class simulation
 	protected:
 	private:
 		base get_force(base x);
+		double get_potential(base x);
 		void calculate_forces();
 		void init();
 		void calculate_movement();
 		void md_step();
+		void init_r_old();
+
+		double get_E_kin();
+		double get_E_pot();
 };
 
 #endif // SIMULATION_H

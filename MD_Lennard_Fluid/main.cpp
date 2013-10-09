@@ -12,7 +12,7 @@
 #include <SDL/SDL.h>
 
 #include "include/sdl_app.h"
-//#include "include/simulation.h"
+#include "include/simulation.h"
 
 using namespace std;
 

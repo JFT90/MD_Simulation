@@ -42,7 +42,7 @@ class sdl_app : event {
         //game specific
         void reset();
 
-        void draw_dot(double x, double y);
+        void draw_dot(int x, int y);
     private:
         bool running;
         SDL_Surface* surf_display;
