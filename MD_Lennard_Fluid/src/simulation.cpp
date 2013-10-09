@@ -3,8 +3,8 @@
 
 //#########################################################################
 // Simulation parameters
-const int global_L = 8; // Kastenlänge
-const int global_N = 2; // Anzahl der Teilchen
+const double global_L = 8; // Kastenlänge
+const int global_N = 16; // Anzahl der Teilchen
 const double global_T = 8; // Temperatur
 const double global_m = 1; // Teilchenmasse in kg
 const double t_step = 0.001;
@@ -58,6 +58,28 @@ void simulation::settemp(float T) {
 
 }
 
+base simulation::get_conn_vector(base r1, base r2) {
+	base r_temp = {r2.x - r1.x, r2.y-r1.y};
+	// loop around boundary
+	if(abs(r_temp.x)>global_L/2) { // get the distance around the boundary and switch direction
+		if(r_temp.x>0){
+			r_temp.x = r_temp.x - global_L;
+		}
+		else {
+			r_temp.x = global_L + r_temp.x;
+		}
+	}
+	if(abs(r_temp.y)>global_L/2) { // get the distance around the boundary and switch direction
+		if(r_temp.y>0){
+			r_temp.y = r_temp.y - global_L;
+		}
+		else {
+			r_temp.y = global_L + r_temp.y;
+		}
+	}
+	return r_temp;
+}
+
 base simulation::get_force(base x) {
     double mag = 0;
     // Lennard-Jones potential
@@ -66,18 +88,10 @@ base simulation::get_force(base x) {
     double r_len = sqrt(x.x*x.x + x.y*x.y);
     x.x = x.x / r_len;
     x.y = x.y / r_len;
-    mag = 48*(epsilon/r_len)*( -0.5*pow(sigma/r_len, 6) + pow(sigma/r_len, 12) );
-	/*if(abs(mag)>200) {
-		double a = 48.0;
-		double b = 0.5*pow(sigma/r_len, 6);
-		double c = pow(sigma/r_len, 12);
-		double d = c - b;
-		mag = a*(epsilon/r_len)*d;
-	}*/
-    base retval = x;
-    retval.x *= mag;
-    retval.y *= mag;
-    return retval;
+    mag = 48*(epsilon)*( -0.5*pow(sigma/r_len, 7) + pow(sigma/r_len, 13) );
+    x.x *= mag;
+    x.y *= mag;
+    return x;
 }
 
 double simulation::get_potential(base x) {
@@ -86,7 +100,7 @@ double simulation::get_potential(base x) {
     double sigma = 1;
     double r_len = sqrt(x.x*x.x + x.y*x.y);
     double retval = 4*(epsilon)*( pow(sigma/r_len, 12)        - pow(sigma/r_len, 6));
-    retval 		 -= 4*(epsilon)*( pow(sigma/(global_L/2), 12) - pow(sigma/(global_L/2), 6)); // Cutoff mitberechnen
+    // retval 		 -= 4*(epsilon)*( pow(sigma/(global_L/2), 12) - pow(sigma/(global_L/2), 6)); // Cutoff mitberechnen
     return retval;
 }
 
@@ -98,23 +112,12 @@ void simulation::calculate_forces() {
 
     for(int i=0; i<global_N; i++) {
         for(int k=i+1; k<global_N; k++) {
-            base r_1 = r[i];
-            base r_2 = r[k];
-
-            base r_temp = {r_2.x - r_1.x, r_2.y-r_1.y};
-            // loop around boundary
-            r_temp.x = r_temp.x - floor(r_temp.x/global_L)*global_L;
-            r_temp.y = r_temp.y - floor(r_temp.y/global_L)*global_L;
-
-			// cutoff potential at r_c = L/2
-            if (r_temp.x < global_L/2.0 and r_temp.y < global_L/2.0) {
-                base F_temp = get_force(r_temp);
-                F[i].x = F[i].x + F_temp.x;
-                F[i].y = F[i].y + F_temp.y;
-                F[k].x = F[k].x - F_temp.x;
-                F[k].y = F[k].y - F_temp.y;
-            }
-        }
+			base F_temp = get_force(get_conn_vector(r[i],r[k]));
+			F[k].x = F[k].x + F_temp.x;
+			F[k].y = F[k].y + F_temp.y;
+			F[i].x = F[i].x - F_temp.x;
+			F[i].y = F[i].y - F_temp.y;
+		}
     }
 }
 
@@ -163,8 +166,6 @@ void simulation::init() {
 }
 
 void simulation::calculate_movement() {
-	int insane_speed = -1;
-
     for(int i=0; i<global_N; i++) {
         base r_new = {0,0};
         // verlet: r+1 = 2r - r_(-1) + dt^2*a
@@ -183,12 +184,9 @@ void simulation::calculate_movement() {
         r_new.y += temp;
 
         // calculate the new speed
-        // hint: we ignore the loop areound here. This may leed to incorrect speeds for 1-2 ticks
-        v[i].x = (r_new.x - r[i].x)/(t_step);
-        v[i].y = (r_new.y - r[i].y)/(t_step);
-        if (abs(v[i].x)>10 or abs(v[i].y)>10) {
-			insane_speed = i;
-		}
+        v[i] = get_conn_vector(r[i], r_new);
+        v[i].x /= t_step;
+        v[i].y /= t_step;
 
 		// loop around boundary
         r_new.x = r_new.x - floor(r_new.x/global_L)*global_L;
@@ -242,7 +240,7 @@ int simulation::get_global_N(){
 	return global_N;
 }
 
-int simulation::get_global_L(){
+double simulation::get_global_L(){
 	return global_L;
 }
 
@@ -268,24 +266,12 @@ double simulation::get_E_pot() {
 	double ret = 0;
 	for(int i=0; i<global_N; i++) {
         for(int k=i+1; k<global_N; k++) {
-            base r_1 = r[i];
-            base r_2 = r[k];
-
-            base r_temp = {r_1.x - r_2.x, r_1.y-r_2.y};
-            // loop around boundary
-            r_temp.x = r_temp.x - floor(r_temp.x/global_L)*global_L;
-            r_temp.y = r_temp.y - floor(r_temp.y/global_L)*global_L;
-
-			// cutoff potential at r_c = L/2
-            if (r_temp.x < global_L/2.0 and r_temp.y < global_L/2.0) {
-                ret += get_potential(r_temp);
-            }
+			ret += get_potential(get_conn_vector(r[i],r[k]));
         }
     }
     return ret;
 }
 
-simulation::~simulation()
-{
+simulation::~simulation() {
 	//dtor
 }

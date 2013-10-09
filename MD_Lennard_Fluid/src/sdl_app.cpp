@@ -21,7 +21,7 @@ int sdl_app::on_execute(simulation* sim) {
     SDL_Event event;
 
     int step = 0;
-    int draw_step = 10; // draw only every x-th step
+    int draw_step = 7; // draw only every x-th step
 
     while(running) {
         while(SDL_PollEvent(&event)) {
@@ -65,25 +65,21 @@ bool sdl_app::on_init() {
 
 void sdl_app::on_loop() {
 	// update positions in simulation
-//	/*
+	// /*
 	static int i = 0;
 	static int too_high = 0;
 	static double E0 = 0;
-	if(i==33){
-		i++;
-		i--;
-	}
-//	*/
+	//*/
 	sim->main_step();
-//	/*
+	///*
 	double energy_kin = sim->measure().E_kin;
 	double energy_pot = sim->measure().E_pot;
 	if (i==0){E0=energy_kin+energy_pot;}
-	cout << "i=" << i << "\tenergy_kin: " << energy_kin << "\tpot: " << energy_pot;
+	cout << "i=" << i << "\tenergy_kin: " << energy_kin << "\tpot: " << energy_pot << "\t= " << energy_kin + energy_pot;
 	i++;
-	if ((energy_kin+energy_pot)>E0*1.2) {too_high++; cout << " <-- !!!!!!!!" << endl;}
+	if ((energy_kin+energy_pot)>E0*2) {too_high++; cout << " <-- !!!!!!!!" << endl;}
 	else { cout << endl;}
-	if ((energy_kin+energy_pot)<=E0*1.2) {too_high = 0;}
+	if ((energy_kin+energy_pot)<=E0*2) {too_high = 0;}
 
 	if (too_high>=3) {
 		cout << "energy too high three times in a row!"<<endl;
@@ -92,11 +88,11 @@ void sdl_app::on_loop() {
 		too_high = 0;}
 
 	// breakpoint
-//	*/
+	//*/
 }
 
 void sdl_app::on_render() {
-    surface::draw_rectangle(surf_display, 0, 0, WIDTH, HEIGHT, 0, 0, 0);
+    surface::draw_rectangle(surf_display, 0, 0, WIDTH, HEIGHT, 0, 180, 5);
     for(int i=0;i<sim->get_global_N();i++) {
 		// draw
 		double x = sim->get_r()[i].x/sim->get_global_L();
@@ -109,7 +105,7 @@ void sdl_app::on_render() {
     SDL_Flip(surf_display);
 
     // to take a little stress from the CPU
-    SDL_Delay(100);
+    // SDL_Delay(100);
 }
 
 void sdl_app::OnEvent(SDL_Event *i_event) {

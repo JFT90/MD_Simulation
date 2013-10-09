@@ -35,11 +35,12 @@ class simulation
 
 		vector<base> get_r();
 		int get_global_N();
-		int get_global_L();
+		double get_global_L();
 
 		virtual ~simulation();
 	protected:
 	private:
+		base get_conn_vector(base r1, base r2);
 		base get_force(base x);
 		double get_potential(base x);
 		void calculate_forces();
