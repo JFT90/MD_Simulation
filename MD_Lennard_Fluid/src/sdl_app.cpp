@@ -95,8 +95,8 @@ void sdl_app::on_render() {
     surface::draw_rectangle(surf_display, 0, 0, WIDTH, HEIGHT, 0, 180, 5);
     for(int i=0;i<sim->get_global_N();i++) {
 		// draw
-		double x = sim->get_r()[i].x/sim->get_global_L();
-		double y = sim->get_r()[i].y/sim->get_global_L();
+		double x = sim->get_r()[i].GetX()/sim->get_global_L();
+		double y = sim->get_r()[i].GetY()/sim->get_global_L();
 		x *= HEIGHT*1.0;
 		y *= WIDTH*1.0;
 		draw_dot((int) x,(int) y);

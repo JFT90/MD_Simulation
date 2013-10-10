@@ -6,14 +6,9 @@
 #include <stdlib.h>
 #include <time.h>
 
-using namespace std;
+#include "vek.h"
 
-#ifndef BASE
-#define BASE
-struct base { // Structschablone für Ort oder Geschwindigkeit
-    double x,y;
-};
-#endif // BASE
+using namespace std;
 
 struct measurement {
     double E_kin;
@@ -33,16 +28,16 @@ class simulation
 
 		measurement measure();
 
-		vector<base> get_r();
+		vector<vek> get_r();
 		int get_global_N();
 		double get_global_L();
 
 		virtual ~simulation();
 	protected:
 	private:
-		base get_conn_vector(base r1, base r2);
-		base get_force(base x);
-		double get_potential(base x);
+		vek get_conn_vector(vek r1, vek r2);
+		vek get_force(vek x);
+		double get_potential(vek x);
 		void calculate_forces();
 		void init();
 		void calculate_movement();

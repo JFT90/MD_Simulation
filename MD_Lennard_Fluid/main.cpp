@@ -13,6 +13,7 @@
 
 #include "include/sdl_app.h"
 #include "include/simulation.h"
+#include "include/vek.h"
 
 using namespace std;
 
