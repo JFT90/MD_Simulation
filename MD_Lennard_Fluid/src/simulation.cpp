@@ -103,11 +103,11 @@ void simulation::calculate_forces() {
 
             base r_temp = {r_2.x - r_1.x, r_2.y-r_1.y};
             // loop around boundary
-            r_temp.x = r_temp.x - floor(r_temp.x/global_L)*global_L;
-            r_temp.y = r_temp.y - floor(r_temp.y/global_L)*global_L;
+           /* r_temp.x = r_temp.x - floor(r_temp.x/global_L)*global_L;
+            r_temp.y = r_temp.y - floor(r_temp.y/global_L)*global_L;*/
 
 			// cutoff potential at r_c = L/2
-            if (r_temp.x < global_L/2.0 and r_temp.y < global_L/2.0) {
+            if (abs(r_temp.x) < global_L/2.0 and abs(r_temp.y)< global_L/2.0) {
                 base F_temp = get_force(r_temp);
                 F[i].x = F[i].x + F_temp.x;
                 F[i].y = F[i].y + F_temp.y;
@@ -272,12 +272,9 @@ double simulation::get_E_pot() {
             base r_2 = r[k];
 
             base r_temp = {r_1.x - r_2.x, r_1.y-r_2.y};
-            // loop around boundary
-            r_temp.x = r_temp.x - floor(r_temp.x/global_L)*global_L;
-            r_temp.y = r_temp.y - floor(r_temp.y/global_L)*global_L;
 
 			// cutoff potential at r_c = L/2
-            if (r_temp.x < global_L/2.0 and r_temp.y < global_L/2.0) {
+            if (abs(r_temp.x) < global_L/2.0 and abs(r_temp.y) < global_L/2.0) {
                 ret += get_potential(r_temp);
             }
         }
